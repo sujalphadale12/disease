@@ -1,27 +1,16 @@
-name: Selenium CI Test
-on: [push, pull_request]
+- name: Start Streamlit App
+  run: streamlit run app.py &
+  timeout-minutes: 2
 
-jobs:
-  run-selenium:
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout Code
-        uses: actions/checkout@v4
+- name: Wait for app to be ready
+  run: |
+    for i in {1..30}; do
+      if curl -s http://localhost:8501 > /dev/null; then
+        echo "App is ready"
+        break
+      fi
+      sleep 2
+    done
 
-      - name: Set up Python
-        uses: actions/setup-python@v4
-        with:
-          python-version: '3.10'
-
-      - name: Install dependencies
-        run: |
-          pip install -r requirements.txt
-          pip install selenium webdriver-manager
-
-      - name: Start Streamlit App
-        run: |
-          streamlit run app.py & 
-          sleep 10 # Wait for app to boot
-
-      - name: Run Selenium Tests
-        run: python test_app.py
+- name: Run Tests
+  run: python test_app.py
